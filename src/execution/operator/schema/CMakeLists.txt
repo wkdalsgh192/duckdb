@@ -1,6 +1,7 @@
 add_library_unity(
   duckdb_operator_schema
   OBJECT
+  physical_materialized_view.cpp
   physical_alter.cpp
   physical_attach.cpp
   physical_create_art_index.cpp

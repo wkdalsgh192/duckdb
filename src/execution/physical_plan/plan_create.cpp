@@ -3,6 +3,7 @@
 #include "duckdb/execution/operator/schema/physical_create_sequence.hpp"
 #include "duckdb/execution/operator/schema/physical_create_type.hpp"
 #include "duckdb/execution/operator/schema/physical_create_view.hpp"
+#include "duckdb/execution/operator/schema/physical_materialized_view.hpp"
 #include "duckdb/execution/physical_plan_generator.hpp"
 #include "duckdb/parser/parsed_data/create_type_info.hpp"
 #include "duckdb/planner/logical_operator.hpp"
@@ -16,7 +17,7 @@ unique_ptr<PhysicalOperator> PhysicalPlanGenerator::CreatePlan(LogicalCreate &op
 		return make_uniq<PhysicalCreateSequence>(unique_ptr_cast<CreateInfo, CreateSequenceInfo>(std::move(op.info)),
 		                                         op.estimated_cardinality);
 	case LogicalOperatorType::LOGICAL_CREATE_VIEW:
-		return make_uniq<PhysicalCreateView>(unique_ptr_cast<CreateInfo, CreateViewInfo>(std::move(op.info)),
+		return make_uniq<PhysicalCreateMatView>(unique_ptr_cast<CreateInfo, CreateViewInfo>(std::move(op.info)),
 		                                     op.estimated_cardinality);
 	case LogicalOperatorType::LOGICAL_CREATE_SCHEMA:
 		return make_uniq<PhysicalCreateSchema>(unique_ptr_cast<CreateInfo, CreateSchemaInfo>(std::move(op.info)),
