@@ -50,6 +50,7 @@ class BoundConstraint;
 
 struct CreateInfo;
 struct BoundCreateTableInfo;
+struct CreateMaterializedViewInfo;
 struct CommonTableExpressionInfo;
 struct BoundParameterMap;
 struct BoundPragmaInfo;
@@ -142,6 +143,7 @@ public:
 
 	void SetCatalogLookupCallback(catalog_entry_callback_t callback);
 	void BindCreateViewInfo(CreateViewInfo &base);
+	void BindCreateMaterializedViewInfo(CreateMaterializedViewInfo &base);
 	SchemaCatalogEntry &BindSchema(CreateInfo &info);
 	SchemaCatalogEntry &BindCreateFunctionInfo(CreateInfo &info);
 

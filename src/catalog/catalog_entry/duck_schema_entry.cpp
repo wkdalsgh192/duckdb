@@ -14,6 +14,7 @@
 #include "duckdb/catalog/catalog_entry/table_macro_catalog_entry.hpp"
 #include "duckdb/catalog/catalog_entry/type_catalog_entry.hpp"
 #include "duckdb/catalog/catalog_entry/view_catalog_entry.hpp"
+#include "duckdb/catalog/catalog_entry/materialized_view_catalog_entry.hpp"
 #include "duckdb/catalog/default/default_functions.hpp"
 #include "duckdb/catalog/default/default_table_functions.hpp"
 #include "duckdb/catalog/default/default_types.hpp"
@@ -33,6 +34,7 @@
 #include "duckdb/parser/parsed_data/create_table_function_info.hpp"
 #include "duckdb/parser/parsed_data/create_type_info.hpp"
 #include "duckdb/parser/parsed_data/create_view_info.hpp"
+#include "duckdb/parser/parsed_data/create_materialized_view_info.hpp"
 #include "duckdb/parser/parsed_data/drop_info.hpp"
 #include "duckdb/planner/constraints/bound_foreign_key_constraint.hpp"
 #include "duckdb/planner/parsed_data/bound_create_table_info.hpp"
@@ -245,6 +247,11 @@ optional_ptr<CatalogEntry> DuckSchemaEntry::CreateView(CatalogTransaction transa
 	return AddEntry(transaction, std::move(view), info.on_conflict);
 }
 
+optional_ptr<CatalogEntry> DuckSchemaEntry::CreateMaterializedView(CatalogTransaction transaction, CreateMaterializedViewInfo &info) {
+	auto view = make_uniq<MaterializedViewCatalogEntry>(catalog, *this, info);
+	return AddEntry(transaction, std::move(view), info.on_conflict);
+}
+
 optional_ptr<CatalogEntry> DuckSchemaEntry::CreateIndex(CatalogTransaction transaction, CreateIndexInfo &info,
                                                         TableCatalogEntry &table) {
 	info.dependencies.AddDependency(table);
@@ -382,6 +389,7 @@ SimilarCatalogEntry DuckSchemaEntry::GetSimilarEntry(CatalogTransaction transact
 CatalogSet &DuckSchemaEntry::GetCatalogSet(CatalogType type) {
 	switch (type) {
 	case CatalogType::VIEW_ENTRY:
+	case CatalogType::MATERIALIZED_VIEW_ENTRY:
 	case CatalogType::TABLE_ENTRY:
 		return tables;
 	case CatalogType::INDEX_ENTRY:

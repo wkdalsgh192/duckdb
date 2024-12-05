@@ -16,8 +16,11 @@ unique_ptr<PhysicalOperator> PhysicalPlanGenerator::CreatePlan(LogicalCreate &op
 	case LogicalOperatorType::LOGICAL_CREATE_SEQUENCE:
 		return make_uniq<PhysicalCreateSequence>(unique_ptr_cast<CreateInfo, CreateSequenceInfo>(std::move(op.info)),
 		                                         op.estimated_cardinality);
+	case LogicalOperatorType::LOGICAL_CREATE_MATVIEW:
+		return make_uniq<PhysicalCreateMatView>(unique_ptr_cast<CreateInfo, CreateMaterializedViewInfo>(std::move(op.info)),
+		                                        op.estimated_cardinality);
 	case LogicalOperatorType::LOGICAL_CREATE_VIEW:
-		return make_uniq<PhysicalCreateMatView>(unique_ptr_cast<CreateInfo, CreateViewInfo>(std::move(op.info)),
+		return make_uniq<PhysicalCreateView>(unique_ptr_cast<CreateInfo, CreateViewInfo>(std::move(op.info)),
 		                                     op.estimated_cardinality);
 	case LogicalOperatorType::LOGICAL_CREATE_SCHEMA:
 		return make_uniq<PhysicalCreateSchema>(unique_ptr_cast<CreateInfo, CreateSchemaInfo>(std::move(op.info)),

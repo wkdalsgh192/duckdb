@@ -33,6 +33,7 @@ struct CreateCopyFunctionInfo;
 struct CreatePragmaFunctionInfo;
 struct CreateFunctionInfo;
 struct CreateViewInfo;
+struct CreateMaterializedViewInfo;
 struct CreateSequenceInfo;
 struct CreateCollationInfo;
 struct CreateIndexInfo;
@@ -166,6 +167,9 @@ public:
 	//! Creates a table in the catalog.
 	DUCKDB_API optional_ptr<CatalogEntry> CreateView(CatalogTransaction transaction, CreateViewInfo &info);
 	DUCKDB_API optional_ptr<CatalogEntry> CreateView(ClientContext &context, CreateViewInfo &info);
+	//! Creates a materialized view in the catalog.
+	DUCKDB_API optional_ptr<CatalogEntry> CreateMaterializedView(CatalogTransaction transaction, CreateMaterializedViewInfo &info);
+	DUCKDB_API optional_ptr<CatalogEntry> CreateMaterializedView(ClientContext &context, CreateMaterializedViewInfo &info);
 	//! Creates a sequence in the catalog.
 	DUCKDB_API optional_ptr<CatalogEntry> CreateSequence(CatalogTransaction transaction, CreateSequenceInfo &info);
 	DUCKDB_API optional_ptr<CatalogEntry> CreateSequence(ClientContext &context, CreateSequenceInfo &info);
@@ -197,6 +201,10 @@ public:
 	//! Creates a view in the catalog
 	DUCKDB_API optional_ptr<CatalogEntry> CreateView(CatalogTransaction transaction, SchemaCatalogEntry &schema,
 	                                                 CreateViewInfo &info);
+
+	//! Creates a view in the catalog
+	DUCKDB_API optional_ptr<CatalogEntry> CreateMaterializedView(CatalogTransaction transaction, SchemaCatalogEntry &schema,
+	                                                 CreateMaterializedViewInfo &info);
 	//! Creates a table in the catalog.
 	DUCKDB_API optional_ptr<CatalogEntry> CreateSequence(CatalogTransaction transaction, SchemaCatalogEntry &schema,
 	                                                     CreateSequenceInfo &info);

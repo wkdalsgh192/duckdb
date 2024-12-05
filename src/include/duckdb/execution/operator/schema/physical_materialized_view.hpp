@@ -10,6 +10,7 @@
 
 #include "duckdb/execution/physical_operator.hpp"
 #include "duckdb/parser/parsed_data/create_view_info.hpp"
+#include "duckdb/parser/parsed_data/create_materialized_view_info.hpp"
 
 namespace duckdb {
 
@@ -19,12 +20,12 @@ public:
 	static constexpr const PhysicalOperatorType TYPE = PhysicalOperatorType::CREATE_MATVIEW;
 
 public:
-	explicit PhysicalCreateMatView(unique_ptr<CreateViewInfo> info, idx_t estimated_cardinality)
+	explicit PhysicalCreateMatView(unique_ptr<CreateMaterializedViewInfo> info, idx_t estimated_cardinality)
 	    : PhysicalOperator(PhysicalOperatorType::CREATE_MATVIEW, {LogicalType::BIGINT}, estimated_cardinality),
 	      info(std::move(info)) {
 	}
 
-	unique_ptr<CreateViewInfo> info;
+	unique_ptr<CreateMaterializedViewInfo> info;
 
 public:
 	// Source interface

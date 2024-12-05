@@ -10,6 +10,7 @@
 #include "duckdb/parser/parsed_data/create_table_info.hpp"
 #include "duckdb/parser/parsed_data/create_schema_info.hpp"
 #include "duckdb/parser/parsed_data/create_view_info.hpp"
+#include "duckdb/parser/parsed_data/create_materialized_view_info.hpp"
 #include "duckdb/parser/parsed_data/create_type_info.hpp"
 #include "duckdb/parser/parsed_data/create_macro_info.hpp"
 #include "duckdb/parser/parsed_data/create_sequence_info.hpp"
@@ -68,6 +69,8 @@ unique_ptr<CreateInfo> CreateInfo::Deserialize(Deserializer &deserializer) {
 		break;
 	case CatalogType::VIEW_ENTRY:
 		result = CreateViewInfo::Deserialize(deserializer);
+	case CatalogType::MATERIALIZED_VIEW_ENTRY:
+		result = CreateMaterializedViewInfo::Deserialize(deserializer);
 		break;
 	default:
 		throw SerializationException("Unsupported type for deserialization of CreateInfo!");
@@ -210,6 +213,28 @@ unique_ptr<CreateInfo> CreateViewInfo::Deserialize(Deserializer &deserializer) {
 	deserializer.ReadPropertyWithDefault<unique_ptr<SelectStatement>>(203, "query", result->query);
 	deserializer.ReadPropertyWithDefault<vector<string>>(204, "names", result->names);
 	deserializer.ReadPropertyWithExplicitDefault<vector<Value>>(205, "column_comments", result->column_comments, vector<Value>());
+	return std::move(result);
+}
+
+void CreateMaterializedViewInfo::Serialize(Serializer &serializer) const {
+	CreateInfo::Serialize(serializer);
+	serializer.WritePropertyWithDefault<string>(200, "view_name", view_name);
+	serializer.WritePropertyWithDefault<vector<string>>(201, "aliases", aliases);
+	serializer.WritePropertyWithDefault<vector<LogicalType>>(202, "types", types);
+	serializer.WritePropertyWithDefault<unique_ptr<SelectStatement>>(203, "query", query);
+	serializer.WritePropertyWithDefault<vector<string>>(204, "names", names);
+	serializer.WritePropertyWithDefault<vector<Value>>(205, "column_comments", column_comments, vector<Value>());
+}
+
+unique_ptr<CreateInfo> CreateMaterializedViewInfo::Deserialize(Deserializer &deserializer) {
+	auto result = duckdb::unique_ptr<CreateMaterializedViewInfo>(new CreateMaterializedViewInfo());
+	deserializer.ReadPropertyWithDefault<string>(200, "view_name", result->view_name);
+	deserializer.ReadPropertyWithDefault<vector<string>>(201, "aliases", result->aliases);
+	deserializer.ReadPropertyWithDefault<vector<LogicalType>>(202, "types", result->types);
+	deserializer.ReadPropertyWithDefault<unique_ptr<SelectStatement>>(203, "query", result->query);
+	deserializer.ReadPropertyWithDefault<vector<string>>(204, "names", result->names);
+	deserializer.ReadPropertyWithExplicitDefault<vector<Value>>(205, "column_comments", result->column_comments,
+	                                                            vector<Value>());
 	return std::move(result);
 }
 

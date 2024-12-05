@@ -25,6 +25,7 @@
 #include "duckdb/parser/parsed_data/create_table_function_info.hpp"
 #include "duckdb/parser/parsed_data/create_type_info.hpp"
 #include "duckdb/parser/parsed_data/create_view_info.hpp"
+#include "duckdb/parser/parsed_data/create_materialized_view_info.hpp"
 #include "duckdb/parser/parsed_data/drop_info.hpp"
 #include "duckdb/planner/parsed_data/bound_create_table_info.hpp"
 #include "duckdb/planner/binder.hpp"
@@ -142,6 +143,23 @@ optional_ptr<CatalogEntry> Catalog::CreateTable(CatalogTransaction transaction, 
 optional_ptr<CatalogEntry> Catalog::CreateTable(CatalogTransaction transaction, BoundCreateTableInfo &info) {
 	auto &schema = GetSchema(transaction, info.base->schema);
 	return CreateTable(transaction, schema, info);
+}
+
+//===--------------------------------------------------------------------===//
+// Materialized View
+//===--------------------------------------------------------------------===//
+optional_ptr<CatalogEntry> Catalog::CreateMaterializedView(CatalogTransaction transaction, CreateMaterializedViewInfo &info) {
+	auto &schema = GetSchema(transaction, info.schema);
+	return CreateMaterializedView(transaction, schema, info);
+}
+
+optional_ptr<CatalogEntry> Catalog::CreateMaterializedView(ClientContext &context, CreateMaterializedViewInfo &info) {
+	return CreateMaterializedView(GetCatalogTransaction(context), info);
+}
+
+optional_ptr<CatalogEntry> Catalog::CreateMaterializedView(CatalogTransaction transaction, SchemaCatalogEntry &schema,
+                                                           CreateMaterializedViewInfo &info) {
+	return schema.CreateMaterializedView(transaction, info);
 }
 
 //===--------------------------------------------------------------------===//

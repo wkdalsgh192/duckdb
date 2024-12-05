@@ -5,6 +5,7 @@
 #include "duckdb/catalog/catalog_entry/scalar_macro_catalog_entry.hpp"
 #include "duckdb/catalog/catalog_entry/type_catalog_entry.hpp"
 #include "duckdb/catalog/catalog_entry/view_catalog_entry.hpp"
+#include "duckdb/catalog/catalog_entry/materialized_view_catalog_entry.hpp"
 #include "duckdb/catalog/catalog_entry/dependency/dependency_entry.hpp"
 #include "duckdb/catalog/duck_catalog.hpp"
 #include "duckdb/common/serializer/binary_deserializer.hpp"
@@ -36,6 +37,7 @@ void CommitState::CommitEntryDrop(CatalogEntry &entry, data_ptr_t dataptr) {
 	switch (parent.type) {
 	case CatalogType::TABLE_ENTRY:
 	case CatalogType::VIEW_ENTRY:
+	case CatalogType::MATERIALIZED_VIEW_ENTRY:
 	case CatalogType::INDEX_ENTRY:
 	case CatalogType::SEQUENCE_ENTRY:
 	case CatalogType::TYPE_ENTRY:
@@ -64,6 +66,7 @@ void CommitState::CommitEntryDrop(CatalogEntry &entry, data_ptr_t dataptr) {
 				}
 				break;
 			case CatalogType::VIEW_ENTRY:
+			case CatalogType::MATERIALIZED_VIEW_ENTRY: 
 			case CatalogType::INDEX_ENTRY:
 			case CatalogType::SEQUENCE_ENTRY:
 			case CatalogType::TYPE_ENTRY:
@@ -77,6 +80,7 @@ void CommitState::CommitEntryDrop(CatalogEntry &entry, data_ptr_t dataptr) {
 		} else {
 			switch (parent.type) {
 			case CatalogType::TABLE_ENTRY:
+			case CatalogType::MATERIALIZED_VIEW_ENTRY:
 			case CatalogType::VIEW_ENTRY:
 			case CatalogType::INDEX_ENTRY:
 			case CatalogType::SEQUENCE_ENTRY:

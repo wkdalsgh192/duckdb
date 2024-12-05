@@ -21,6 +21,7 @@
 #include "duckdb/parser/parsed_data/create_index_info.hpp"
 #include "duckdb/parser/parsed_data/create_macro_info.hpp"
 #include "duckdb/parser/parsed_data/create_secret_info.hpp"
+#include "duckdb/parser/parsed_data/create_materialized_view_info.hpp"
 #include "duckdb/parser/parsed_data/create_view_info.hpp"
 #include "duckdb/parser/parsed_expression_iterator.hpp"
 #include "duckdb/parser/statement/create_statement.hpp"
@@ -137,6 +138,36 @@ void Binder::SetCatalogLookupCallback(catalog_entry_callback_t callback) {
 }
 
 void Binder::BindCreateViewInfo(CreateViewInfo &base) {
+	// bind the view as if it were a query so we can catch errors
+	// note that we bind the original, and replace the original with a copy
+	auto view_binder = Binder::CreateBinder(context);
+	auto &dependencies = base.dependencies;
+	auto &catalog = Catalog::GetCatalog(context, base.catalog);
+
+	auto &db_config = DBConfig::GetConfig(context);
+	bool should_create_dependencies = db_config.GetSetting<EnableViewDependenciesSetting>(context);
+	if (should_create_dependencies) {
+		view_binder->SetCatalogLookupCallback([&dependencies, &catalog](CatalogEntry &entry) {
+			if (&catalog != &entry.ParentCatalog()) {
+				// Don't register dependencies between catalogs
+				return;
+			}
+			dependencies.AddDependency(entry);
+		});
+	}
+	view_binder->can_contain_nulls = true;
+
+	auto copy = base.query->Copy();
+	auto query_node = view_binder->Bind(*base.query);
+	base.query = unique_ptr_cast<SQLStatement, SelectStatement>(std::move(copy));
+	if (base.aliases.size() > query_node.names.size()) {
+		throw BinderException("More VIEW aliases than columns in query result");
+	}
+	base.types = query_node.types;
+	base.names = query_node.names;
+}
+
+void Binder::BindCreateMaterializedViewInfo(CreateMaterializedViewInfo &base) {
 	// bind the view as if it were a query so we can catch errors
 	// note that we bind the original, and replace the original with a copy
 	auto view_binder = Binder::CreateBinder(context);
