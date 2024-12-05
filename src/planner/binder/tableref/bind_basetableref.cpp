@@ -1,5 +1,6 @@
 #include "duckdb/catalog/catalog_entry/table_catalog_entry.hpp"
 #include "duckdb/catalog/catalog_entry/view_catalog_entry.hpp"
+#include "duckdb/catalog/catalog_entry/materialized_view_catalog_entry.hpp"
 #include "duckdb/common/string_util.hpp"
 #include "duckdb/main/client_context.hpp"
 #include "duckdb/main/config.hpp"
@@ -261,6 +262,64 @@ unique_ptr<BoundTableRef> Binder::Bind(BaseTableRef &ref) {
 	case CatalogType::VIEW_ENTRY: {
 		// the node is a view: get the query that the view represents
 		auto &view_catalog_entry = table_or_view->Cast<ViewCatalogEntry>();
+		// We need to use a new binder for the view that doesn't reference any CTEs
+		// defined for this binder so there are no collisions between the CTEs defined
+		// for the view and for the current query
+		auto view_binder = Binder::CreateBinder(context, this, BinderType::VIEW_BINDER);
+		view_binder->can_contain_nulls = true;
+		SubqueryRef subquery(unique_ptr_cast<SQLStatement, SelectStatement>(view_catalog_entry.query->Copy()));
+		subquery.alias = ref.alias;
+		// construct view names by first (1) taking the view aliases, (2) adding the view names, then (3) applying
+		// subquery aliases
+		vector<string> view_names = view_catalog_entry.aliases;
+		for (idx_t n = view_names.size(); n < view_catalog_entry.names.size(); n++) {
+			view_names.push_back(view_catalog_entry.names[n]);
+		}
+		subquery.column_name_alias = BindContext::AliasColumnNames(ref.table_name, view_names, ref.column_name_alias);
+
+		// when binding a view, we always look into the catalog/schema where the view is stored first
+		vector<CatalogSearchEntry> view_search_path;
+		auto &catalog_name = view_catalog_entry.ParentCatalog().GetName();
+		auto &schema_name = view_catalog_entry.ParentSchema().name;
+		view_search_path.emplace_back(catalog_name, schema_name);
+		if (schema_name != DEFAULT_SCHEMA) {
+			view_search_path.emplace_back(view_catalog_entry.ParentCatalog().GetName(), DEFAULT_SCHEMA);
+		}
+		view_binder->entry_retriever.SetSearchPath(std::move(view_search_path));
+		// bind the child subquery
+		view_binder->AddBoundView(view_catalog_entry);
+		auto bound_child = view_binder->Bind(subquery);
+		if (!view_binder->correlated_columns.empty()) {
+			throw BinderException("Contents of view were altered - view bound correlated columns");
+		}
+
+		D_ASSERT(bound_child->type == TableReferenceType::SUBQUERY);
+		// verify that the types and names match up with the expected types and names
+		auto &bound_subquery = bound_child->Cast<BoundSubqueryRef>();
+		if (GetBindingMode() != BindingMode::EXTRACT_NAMES) {
+			if (bound_subquery.subquery->types != view_catalog_entry.types) {
+				auto actual_types = StringUtil::ToString(bound_subquery.subquery->types, ", ");
+				auto expected_types = StringUtil::ToString(view_catalog_entry.types, ", ");
+				throw BinderException(
+				    "Contents of view were altered: types don't match! Expected [%s], but found [%s] instead",
+				    expected_types, actual_types);
+			}
+			if (bound_subquery.subquery->names.size() == view_catalog_entry.names.size() &&
+			    bound_subquery.subquery->names != view_catalog_entry.names) {
+				auto actual_names = StringUtil::Join(bound_subquery.subquery->names, ", ");
+				auto expected_names = StringUtil::Join(view_catalog_entry.names, ", ");
+				throw BinderException(
+				    "Contents of view were altered: names don't match! Expected [%s], but found [%s] instead",
+				    expected_names, actual_names);
+			}
+		}
+		bind_context.AddView(bound_subquery.subquery->GetRootIndex(), subquery.alias, subquery,
+		                     *bound_subquery.subquery, view_catalog_entry);
+		return bound_child;
+	}
+	case CatalogType::MATERIALIZED_VIEW_ENTRY: {
+		// the node is a view: get the query that the view represents
+		auto &view_catalog_entry = table_or_view->Cast<MaterializedViewCatalogEntry>();
 		// We need to use a new binder for the view that doesn't reference any CTEs
 		// defined for this binder so there are no collisions between the CTEs defined
 		// for the view and for the current query

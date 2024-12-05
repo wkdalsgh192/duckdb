@@ -37,6 +37,7 @@ class LimitModifier;
 class OrderBinder;
 class TableCatalogEntry;
 class ViewCatalogEntry;
+class MaterializedViewCatalogEntry;
 class TableMacroCatalogEntry;
 class UpdateSetInfo;
 class LogicalProjection;
@@ -171,6 +172,7 @@ public:
 
 	//! Add the view to the set of currently bound views - used for detecting recursive view definitions
 	void AddBoundView(ViewCatalogEntry &view);
+	void AddBoundView(MaterializedViewCatalogEntry &view);
 
 	void PushExpressionBinder(ExpressionBinder &binder);
 	void PopExpressionBinder();
@@ -246,6 +248,7 @@ private:
 	case_insensitive_map_t<unique_ptr<TableRef>> replacement_scans;
 	//! The set of bound views
 	reference_set_t<ViewCatalogEntry> bound_views;
+	reference_set_t<MaterializedViewCatalogEntry> bound_mviews;
 	//! Used to retrieve CatalogEntry's
 	CatalogEntryRetriever entry_retriever;
 	//! Unnamed subquery index

@@ -2,6 +2,7 @@
 
 #include "duckdb/catalog/catalog_entry/aggregate_function_catalog_entry.hpp"
 #include "duckdb/catalog/catalog_entry/table_catalog_entry.hpp"
+#include "duckdb/catalog/catalog_entry/materialized_view_catalog_entry.hpp"
 #include "duckdb/catalog/catalog_entry/view_catalog_entry.hpp"
 #include "duckdb/common/enum_util.hpp"
 #include "duckdb/common/helper.hpp"
@@ -518,6 +519,18 @@ void Binder::AddBoundView(ViewCatalogEntry &view) {
 		current = current->parent.get();
 	}
 	bound_views.insert(view);
+}
+
+void Binder::AddBoundView(MaterializedViewCatalogEntry &view) {
+	// check if the view is already bound
+	auto current = this;
+	while (current) {
+		if (current->bound_mviews.find(view) != current->bound_mviews.end()) {
+			throw BinderException("infinite recursion detected: attempting to recursively bind view \"%s\"", view.name);
+		}
+		current = current->parent.get();
+	}
+	bound_mviews.insert(view);
 }
 
 idx_t Binder::GenerateTableIndex() {
