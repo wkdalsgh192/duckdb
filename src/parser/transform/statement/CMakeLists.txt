@@ -39,7 +39,8 @@ add_library_unity(
   transform_use.cpp
   transform_create_sequence.cpp
   transform_vacuum.cpp
-  transform_alter_sequence.cpp)
+  transform_alter_sequence.cpp
+  transform_create_materialized_view.cpp)
 set(ALL_OBJECT_FILES
     ${ALL_OBJECT_FILES} $<TARGET_OBJECTS:duckdb_transformer_statement>
     PARENT_SCOPE)

@@ -307,6 +307,7 @@ typedef enum PGNodeTag {
 	 * TAGS FOR STATEMENT NODES (mostly in parsenodes.h)
 	 */
 	T_PGRawStmt,
+	T_PGMaterializedViewStmt,
 	T_PGQuery,
 	T_PGPlannedStmt,
 	T_PGInsertStmt,
