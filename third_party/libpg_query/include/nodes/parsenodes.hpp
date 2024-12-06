@@ -1907,6 +1907,8 @@ typedef struct PGMaterializedViewStmt {
 	PGList *aliases;               /* Target column names (aliases) */
 	PGNode *query;                 /* SELECT query (as a raw parse tree) */
 	PGOnCreateConflict onconflict; /* Conflict handling (e.g., IGNORE, REPLACE) */
+	PGList *options;               /* options from WITH clause */
+	PGViewCheckOption withCheckOption; /* WITH CHECK OPTION */
 } PGMaterializedViewStmt;
 
 /* ----------------------
