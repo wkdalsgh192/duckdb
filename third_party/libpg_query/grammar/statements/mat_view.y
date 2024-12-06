@@ -6,7 +6,7 @@
  *
  *****************************************************************************/
 MatViewStmt: 
-    CREATE_P MATVIEW qualified_name opt_column_list
+    CREATE_P MATERIALIZED VIEW qualified_name opt_column_list
     AS SelectStmt
     {
         PGMaterializedViewStmt *n = makeNode(PGMaterializedViewStmt);
@@ -16,7 +16,7 @@ MatViewStmt:
         n->onconflict = PG_ERROR_ON_CONFLICT;
         $$ = (PGNode *) n;
     }
-| CREATE_P OR REPLACE MATVIEW qualified_name opt_column_list
+| CREATE_P OR REPLACE MATERIALIZED VIEW qualified_name opt_column_list
     AS SelectStmt
     {
         PGMaterializedViewStmt *n = makeNode(PGMaterializedViewStmt);
