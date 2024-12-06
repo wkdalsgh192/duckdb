@@ -42,7 +42,7 @@ DuckTableEntry::DuckTableEntry(Catalog &catalog, SchemaCatalogEntry &schema, Bou
                                shared_ptr<DataTable> inherited_storage)
     : TableCatalogEntry(catalog, schema, info.Base()), storage(std::move(inherited_storage)),
       column_dependency_manager(std::move(info.column_dependency_manager)) {
-
+	
 	if (storage) {
 		if (!info.indexes.empty()) {
 			storage->SetIndexStorageInfo(std::move(info.indexes));
@@ -122,6 +122,10 @@ DuckTableEntry::DuckTableEntry(Catalog &catalog, SchemaCatalogEntry &schema, Bou
 
 	if (!info.indexes.empty()) {
 		storage->SetIndexStorageInfo(std::move(info.indexes));
+	}
+
+	if (info.materialized_query) {
+		this->query = std::move(info.materialized_query);
 	}
 }
 

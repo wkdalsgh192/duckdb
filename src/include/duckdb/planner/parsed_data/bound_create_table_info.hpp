@@ -42,6 +42,8 @@ struct BoundCreateTableInfo {
 	unique_ptr<PersistentTableData> data;
 	//! CREATE TABLE from QUERY
 	unique_ptr<LogicalOperator> query;
+	//! CREATE MATERIALIZED VIEW from QUERY
+	unique_ptr<SelectStatement> materialized_query;
 	//! Indexes created by this table
 	vector<IndexStorageInfo> indexes;
 

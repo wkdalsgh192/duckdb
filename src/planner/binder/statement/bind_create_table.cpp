@@ -317,9 +317,11 @@ unique_ptr<BoundCreateTableInfo> Binder::BindCreateTableInfo(unique_ptr<CreateIn
 
 	vector<unique_ptr<BoundConstraint>> bound_constraints;
 	if (base.query) {
+		auto copied_query = unique_ptr_cast<SQLStatement, SelectStatement>(base.query->Copy());
 		// construct the result object
 		auto query_obj = Bind(*base.query);
 		base.query.reset();
+		result->materialized_query = std::move(copied_query);
 		result->query = std::move(query_obj.plan);
 
 		// construct the set of columns based on the names and types of the query

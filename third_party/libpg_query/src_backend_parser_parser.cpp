@@ -57,7 +57,12 @@ PGList *raw_parser(const char *str) {
 	parser_init(&yyextra);
 
 	/* Parse! */
-	yyresult = base_yyparse(yyscanner);
+	
+	try {
+		yyresult = base_yyparse(yyscanner);		 
+	} catch (std::exception &ex) {
+		yyresult = 0;
+	}
 
 	/* Clean up (release memory) */
 	scanner_finish(yyscanner);

@@ -730,6 +730,7 @@ BoundStatement Binder::Bind(CreateStatement &stmt) {
 		if (AnyConstraintReferencesGeneratedColumn(create_info)) {
 			throw BinderException("Constraints on generated columns are not supported yet");
 		}
+
 		auto bound_info = BindCreateTableInfo(std::move(stmt.info));
 		auto root = std::move(bound_info->query);
 		for (auto &fk_schema : fk_schemas) {
@@ -743,6 +744,10 @@ BoundStatement Binder::Bind(CreateStatement &stmt) {
 		auto create_table = make_uniq<LogicalCreateTable>(schema, std::move(bound_info));
 		if (root) {
 			// CREATE TABLE AS
+			//auto &view_base = stmt.info->Cast<CreateViewInfo>();
+			//// bind the schema
+			//auto &view_schema = BindCreateSchema(*stmt.info);
+			//BindCreateViewInfo(view_base);
 			properties.return_type = StatementReturnType::CHANGED_ROWS;
 			create_table->children.push_back(std::move(root));
 		}

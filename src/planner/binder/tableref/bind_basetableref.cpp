@@ -1,4 +1,5 @@
 #include "duckdb/catalog/catalog_entry/table_catalog_entry.hpp"
+#include "duckdb/catalog/catalog_entry/duck_table_entry.hpp"
 #include "duckdb/catalog/catalog_entry/view_catalog_entry.hpp"
 #include "duckdb/catalog/catalog_entry/materialized_view_catalog_entry.hpp"
 #include "duckdb/common/string_util.hpp"
@@ -227,6 +228,29 @@ unique_ptr<BoundTableRef> Binder::Bind(BaseTableRef &ref) {
 		// base table: create the BoundBaseTableRef node
 		auto table_index = GenerateTableIndex();
 		auto &table = table_or_view->Cast<TableCatalogEntry>();
+		auto &table2 = table_or_view->Cast<DuckTableEntry>();
+
+		/*unique_ptr_cast<TableCatalogEntry, DuckTableEntry>(table);*/
+		if (table2.query) {
+			auto regular_binder = Binder::CreateBinder(context, this);
+			regular_binder->can_contain_nulls = true;
+			SubqueryRef subquery(unique_ptr_cast<SQLStatement, SelectStatement>(table2.query->Copy()));
+
+			vector<CatalogSearchEntry> view_search_path;
+			auto &catalog_name = table2.ParentCatalog().GetName();
+			auto &schema_name = table2.ParentSchema().name;
+			view_search_path.emplace_back(catalog_name, schema_name);
+			if (schema_name != DEFAULT_SCHEMA) {
+				view_search_path.emplace_back(table2.ParentCatalog().GetName(), DEFAULT_SCHEMA);
+			}
+		}
+		
+		//// bind the child subquery
+		//regular_binder->AddBoundView(table2);
+		//auto bound_child = view_binder->Bind(subquery);
+		//if (!view_binder->correlated_columns.empty()) {
+		//	throw BinderException("Contents of view were altered - view bound correlated columns");
+		//}
 
 		auto &properties = GetStatementProperties();
 		properties.RegisterDBRead(table.ParentCatalog(), context);

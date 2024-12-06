@@ -31523,6 +31523,22 @@ yyreduce:
 				;}
     break;
 
+case 1553:
+#line 51 "third_party/libpg_query/grammar/statements/create_as.y"
+    {
+					PGCreateTableAsStmt *ctas = makeNode(PGCreateTableAsStmt);
+					ctas->query = (yyvsp[(6) - (7)].node);
+					ctas->into = (yyvsp[(4) - (7)].into);
+					ctas->relkind = PG_OBJECT_TABLE;
+					ctas->is_select_into = false;
+					ctas->onconflict = PG_ERROR_ON_CONFLICT;
+					/* cram additional flags into the PGIntoClause */
+					(yyvsp[(4) - (7)].into)->rel->relpersistence = (yyvsp[(2) - (7)].ival);
+					(yyvsp[(4) - (7)].into)->skipData = !((yyvsp[(7) - (7)].boolean));
+					(yyval.node) = (PGNode *) ctas;
+				;}
+    break;
+
 
 /* Line 1267 of yacc.c.  */
 #line 31529 "third_party/libpg_query/grammar/grammar_out.cpp"
