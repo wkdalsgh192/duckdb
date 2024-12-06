@@ -1897,6 +1897,19 @@ typedef struct PGViewStmt {
 } PGViewStmt;
 
 /* ----------------------
+ *		Create MatView Statement
+ * ----------------------
+ */
+
+typedef struct PGMaterializedViewStmt {
+	PGNodeTag type;                /* Node type identifier */
+	PGRangeVar *view;              /* Name of the materialized view */
+	PGList *aliases;               /* Target column names (aliases) */
+	PGNode *query;                 /* SELECT query (as a raw parse tree) */
+	PGOnCreateConflict onconflict; /* Conflict handling (e.g., IGNORE, REPLACE) */
+} PGMaterializedViewStmt;
+
+/* ----------------------
  *		Load Statement
  * ----------------------
  */
