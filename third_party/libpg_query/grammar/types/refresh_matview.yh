@@ -1,0 +1,2 @@
+%type <boolean> opt_with_data
+%type <boolean> opt_concurrently
