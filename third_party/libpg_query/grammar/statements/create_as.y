@@ -47,6 +47,19 @@ CreateAsStmt:
 					$6->skipData = !($9);
 					$$ = (PGNode *) ctas;
 				}
+		| CREATE_P MATERIALIZED VIEW create_as_target AS SelectStmt opt_with_data
+				{
+					PGCreateTableAsStmt *ctas = makeNode(PGCreateTableAsStmt);
+								ctas->query = $6;
+								ctas->into = $4;
+								ctas->relkind = PG_OBJECT_TABLE;
+								ctas->is_select_into = false;
+								ctas->onconflict = PG_ERROR_ON_CONFLICT;
+								/* cram additional flags into the PGIntoClause */
+								$4->rel->relpersistence = *($2);
+								$4->skipData = !($7);
+								$$ = (PGNode *) ctas;
+				}
 		;
 
 
