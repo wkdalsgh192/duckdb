@@ -26,7 +26,6 @@ ImportStmt
 IndexStmt
 InsertStmt
 LoadStmt
-MatViewStmt
 PragmaStmt
 PrepareStmt
 RenameStmt
