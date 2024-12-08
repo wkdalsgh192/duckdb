@@ -5,15 +5,13 @@
  *				REFRESH MATERIALIZED VIEW qualified_name
  *
  *****************************************************************************/
-
 RefreshMatViewStmt:
-			REFRESH MATERIALIZED VIEW opt_concurrently qualified_name opt_with_data
-				{
-					PGRefreshMatViewStmt *n = makeNode(PGRefreshMatViewStmt);
+		REFRESH MATERIALIZED VIEW qualified_name
+			{
+				PGRefreshMatViewStmt *n = makeNode(PGRefreshMatViewStmt);
 
-					n->concurrent = $4;
-					n->relation = $5;
-					n->skipData = !($6);
-					$$ = (Node *) n;
-				}
+				n->relation = $4;
+				n->relkind = PG_OBJECT_TABLE;
+				$$ = (PGNode *) n;
+			}
 		;

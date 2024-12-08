@@ -77,6 +77,7 @@ ExplainableStmt:
 			| PragmaStmt
 			| PrepareStmt
 			| RenameStmt
+			| RefreshMatViewStmt
 			| SelectStmt
 			| TransactionStmt
 			| UpdateStmt
