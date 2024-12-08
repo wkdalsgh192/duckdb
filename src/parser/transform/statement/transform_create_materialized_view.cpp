@@ -1,58 +1,41 @@
+#include "duckdb/parser/parsed_data/create_table_info.hpp"
 #include "duckdb/parser/statement/create_statement.hpp"
 #include "duckdb/parser/transformer.hpp"
-#include "duckdb/parser/parsed_data/create_materialized_view_info.hpp"
 
 namespace duckdb {
 
 unique_ptr<CreateStatement> Transformer::TransformCreateMaterializedView(duckdb_libpgquery::PGMaterializedViewStmt &stmt) {
-    D_ASSERT(stmt.type == duckdb_libpgquery::T_PGMaterializedViewStmt);
-    D_ASSERT(stmt.view);
+	if (stmt.relkind == duckdb_libpgquery::PG_OBJECT_MATVIEW) {
+		throw NotImplementedException("Materialized view not implemented");
+	}
+	if (stmt.is_select_into || stmt.into->options) {
+		throw NotImplementedException("Unimplemented features for CREATE TABLE as");
+	}
+	if (stmt.query->type != duckdb_libpgquery::T_PGSelectStmt) {
+		throw ParserException("CREATE TABLE AS requires a SELECT clause");
+	}
 
-    auto result = make_uniq<CreateStatement>();
-    auto info = make_uniq<CreateMaterializedViewInfo>();
+	auto result = make_uniq<CreateStatement>();
+	auto info = make_uniq<CreateTableInfo>();
+	auto qname = TransformQualifiedName(*stmt.into->rel);
+	auto query = TransformSelectStmt(*stmt.query, false);
 
-    auto qname = TransformQualifiedName(*stmt.view);
-    info->catalog = qname.catalog;
-    info->schema = qname.schema;
-    info->view_name = qname.name;
-    info->temporary = !stmt.view->relpersistence;
-    if (info->temporary && IsInvalidCatalog(info->catalog)) {
-        info->catalog = TEMP_CATALOG;
-    }
-    info->on_conflict = TransformOnConflict(stmt.onconflict);
-
-    info->query = TransformSelectStmt(*stmt.query, false);
-
-    PivotEntryCheck("materialized_view");
-
-    if (stmt.aliases && stmt.aliases->length > 0) {
-        for (auto c = stmt.aliases->head; c != nullptr; c = lnext(c)) {
-            auto val = PGPointerCast<duckdb_libpgquery::PGValue>(c->data.ptr_value);
-            switch (val->type) {
-            case duckdb_libpgquery::T_PGString: {
-                info->aliases.emplace_back(val->val.str);
-                break;
-            }
-            default:
-                throw NotImplementedException("Materialized view projection type");
-            }
-        }
-        if (info->aliases.empty()) {
-            throw ParserException("Need at least one column name in CREATE MATERIALIZED VIEW projection list");
-        }
-    }
-
-    if (stmt.options && stmt.options->length > 0) {
-        throw NotImplementedException("MATERIALIZED VIEW options");
-    }
-
-    // Materialized views do not support WITH CHECK OPTION.
-    if (stmt.withCheckOption != duckdb_libpgquery::PGViewCheckOption::PG_NO_CHECK_OPTION) {
-        throw NotImplementedException("MATERIALIZED VIEW CHECK options");
-    }
-
-    result->info = std::move(info);
-    return result;
+	if (stmt.into->colNames) {
+		auto cols = TransformStringList(stmt.into->colNames);
+		for (idx_t i = 0; i < cols.size(); i++) {
+			// We really don't know the type of the columns during parsing, so we just use UNKNOWN
+			info->columns.AddColumn(ColumnDefinition(cols[i], LogicalType::UNKNOWN));
+		}
+	}
+	info->catalog = qname.catalog;
+	info->schema = qname.schema;
+	info->table = qname.name;
+	info->on_conflict = TransformOnConflict(stmt.onconflict);
+	info->temporary =
+	    stmt.into->rel->relpersistence == duckdb_libpgquery::PGPostgresRelPersistence::PG_RELPERSISTENCE_TEMP;
+	info->query = std::move(query);
+	result->info = std::move(info);
+	return result;
 }
 
 } // namespace duckdb

@@ -1902,13 +1902,12 @@ typedef struct PGViewStmt {
  */
 
 typedef struct PGMaterializedViewStmt {
-	PGNodeTag type;                /* Node type identifier */
-	PGRangeVar *view;              /* Name of the materialized view */
-	PGList *aliases;               /* Target column names (aliases) */
-	PGNode *query;                 /* SELECT query (as a raw parse tree) */
-	PGOnCreateConflict onconflict; /* Conflict handling (e.g., IGNORE, REPLACE) */
-	PGList *options;               /* options from WITH clause */
-	PGViewCheckOption withCheckOption; /* WITH CHECK OPTION */
+	PGNodeTag type;
+	PGNode *query;                 /* the query (see comments above) */
+	PGIntoClause *into;            /* destination table */
+	PGObjectType relkind;          /* PG_OBJECT_TABLE or PG_OBJECT_MATVIEW */
+	bool is_select_into;           /* it was written as SELECT INTO */
+	PGOnCreateConflict onconflict; /* what to do on create conflict */
 } PGMaterializedViewStmt;
 
 /* ----------------------
