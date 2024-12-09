@@ -30463,7 +30463,7 @@ yyreduce:
 					ctas->is_select_into = false;
 					ctas->onconflict = PG_ERROR_ON_CONFLICT;
 					/* cram additional flags into the PGIntoClause */
-					(yyvsp[(4) - (7)].into)->rel->relpersistence = *((yyvsp[(2) - (7)].keyword));
+					(yyvsp[(4) - (7)].into)->rel->relpersistence = (yyvsp[(2) - (7)].keyword);
 					(yyvsp[(4) - (7)].into)->skipData = !((yyvsp[(7) - (7)].boolean));
 					(yyval.node) = (PGNode *) ctas;
 				;}

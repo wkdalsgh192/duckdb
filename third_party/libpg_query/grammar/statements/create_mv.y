@@ -9,7 +9,7 @@ CreateMatViewStmt:
 					ctas->is_select_into = false;
 					ctas->onconflict = PG_ERROR_ON_CONFLICT;
 					/* cram additional flags into the PGIntoClause */
-					$4->rel->relpersistence = *($2);
+					$4->rel->relpersistence = $2;
 					$4->skipData = !($7);
 					$$ = (PGNode *) ctas;
 				}
