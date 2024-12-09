@@ -2,7 +2,7 @@
 CreateMatViewStmt:
 		CREATE_P MATERIALIZED VIEW create_mv_target AS SelectStmt opt_with_data
 				{
-					PGMaterializedViewStmt *ctas = makeNode(PGMaterializedViewStmt);
+					PGCreateTableAsStmt *ctas = makeNode(PGCreateTableAsStmt);
 					ctas->query = $6;
 					ctas->into = $4;
 					ctas->relkind = PG_OBJECT_TABLE;
@@ -14,9 +14,9 @@ CreateMatViewStmt:
 					$$ = (PGNode *) ctas;
 				}
 
-		| CREATE OptNoLog MATERIALIZED VIEW IF_P NOT EXISTS create_mv_target AS SelectStmt opt_with_data
+		| CREATE_P MATERIALIZED VIEW IF_P NOT EXISTS create_mv_target AS SelectStmt opt_with_data
 				{
-					PGMaterializedViewStmt *ctas = makeNode(PGMaterializedViewStmt);
+					PGCreateTableAsStmt *ctas = makeNode(PGCreateTableAsStmt);
 					ctas->query = $9;
 					ctas->into = $7;
 					ctas->relkind = PG_OBJECT_TABLE;
