@@ -1,1 +1,2 @@
 %type <into> create_mv_target
+%type <ival> OptNoLog

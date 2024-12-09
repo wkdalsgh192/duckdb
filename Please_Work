@@ -1,0 +1,35 @@
+#Use CSV File to create Table
+CREATE TABLE test_table AS
+SELECT * FROM read_csv('generated_data.csv');
+
+#To Check Time that is required
+EXPLAIN ANALYZE
+
+#To Filter the Columns and make a VIEW
+CREATE MATE VIEW test_table_matview AS
+SELECT Serial, Column2, Column3, Column4, Column5
+From test_table
+WHERE Column2 = 'A'
+AND Column4 > 50
+AND Column5 IN ('X', 'Z');
+
+CREATE VIEW test_table_view AS
+SELECT Serial, Column2, Column3, Column4, Column5
+From test_table
+WHERE Column2 = 'A'
+AND Column4 > 50
+AND Column5 IN ('X', 'Z');
+
+#Gives Info on all the tables and views
+SELECT table_schema, table_name, table_type
+FROM information_schema.tables;
+
+#Drops all Tables
+SELECT 'DROP TABLE ' || table_name || ';'
+FROM information_schema.tables
+WHERE table_type = 'BASE TABLE';
+
+#Drops all Views
+SELECT 'DROP VIEW ' || table_name || ';'
+FROM information_schema.tables
+WHERE table_type = 'VIEW';

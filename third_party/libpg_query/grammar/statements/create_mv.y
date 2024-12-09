@@ -1,6 +1,6 @@
 
 CreateMatViewStmt:
-		CREATE_P MATERIALIZED VIEW create_mv_target AS SelectStmt opt_with_data
+		CREATE_P OptNoLog MATERIALIZED VIEW create_mv_target AS SelectStmt opt_with_data
 				{
 					PGCreateTableAsStmt *ctas = makeNode(PGCreateTableAsStmt);
 					ctas->query = $6;
@@ -9,12 +9,12 @@ CreateMatViewStmt:
 					ctas->is_select_into = false;
 					ctas->onconflict = PG_ERROR_ON_CONFLICT;
 					/* cram additional flags into the PGIntoClause */
-					$4->rel->relpersistence = $2;
-					$4->skipData = !($7);
+					$5->rel->relpersistence = $2;
+					$5->skipData = !($8);
 					$$ = (PGNode *) ctas;
 				}
 
-		| CREATE_P MATERIALIZED VIEW IF_P NOT EXISTS create_mv_target AS SelectStmt opt_with_data
+		| CREATE_P OptNoLog MATERIALIZED VIEW IF_P NOT EXISTS create_mv_target AS SelectStmt opt_with_data
 				{
 					PGCreateTableAsStmt *ctas = makeNode(PGCreateTableAsStmt);
 					ctas->query = $9;
@@ -23,14 +23,18 @@ CreateMatViewStmt:
 					ctas->is_select_into = false;
 					ctas->onconflict = PG_IGNORE_ON_CONFLICT;
 					/* cram additional flags into the PGIntoClause */
-					$7->rel->relpersistence = $2;
-					$7->skipData = !($10);
+					$8->rel->relpersistence = $2;
+					$8->skipData = !($11);
 					$$ = (PGNode *) ctas;
 				}
 		;
 
+OptNoLog:	UNLOGGED					{ $$ = RELPERSISTENCE_UNLOGGED; }
+			| /*EMPTY*/					{ $$ = RELPERSISTENCE_PERMANENT; }
+		;
+
 create_mv_target:
-		qualified_name opt_column_list OptWith OnCommitOption
+		qualified_name opt_column_list OptWith OnCommitOption opt_reloptions
 				{
 					$$ = makeNode(PGIntoClause);
 					$$->rel = $1;
