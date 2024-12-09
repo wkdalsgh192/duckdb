@@ -1,6 +1,6 @@
 
 CreateMatViewStmt:
-		CREATE_P MATERIALIZED VIEW create_as_target AS SelectStmt opt_with_data
+		CREATE_P MATERIALIZED VIEW create_mv_target AS SelectStmt opt_with_data
 				{
 					PGMaterializedViewStmt *ctas = makeNode(PGMaterializedViewStmt);
 					ctas->query = $6;
@@ -29,11 +29,7 @@ CreateMatViewStmt:
 				}
 		;
 
-OptNoLog:	UNLOGGED					{ $$ = RELPERSISTENCE_UNLOGGED; }
-			| /*EMPTY*/					{ $$ = RELPERSISTENCE_PERMANENT; }
-		;
-
-create_as_target:
+create_mv_target:
 		qualified_name opt_column_list OptWith OnCommitOption
 				{
 					$$ = makeNode(PGIntoClause);

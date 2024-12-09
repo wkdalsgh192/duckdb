@@ -61,6 +61,7 @@ ExplainableStmt:
 			| CheckPointStmt
 			| CopyStmt
 			| CreateAsStmt
+			| CreateMatViewStmt
 			| CreateFunctionStmt
 			| CreateSchemaStmt
 			| CreateSeqStmt
