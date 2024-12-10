@@ -1,2 +1,3 @@
-%type <into> create_mv_target
+%type <boolean> opt_with_data
 %type <ival> OptNoLog
+%type <into> create_mv_target
