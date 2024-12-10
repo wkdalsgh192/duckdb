@@ -125,6 +125,8 @@ public:
 	unique_ptr<BoundCreateTableInfo> BindCreateTableInfo(unique_ptr<CreateInfo> info, SchemaCatalogEntry &schema);
 	unique_ptr<BoundCreateTableInfo> BindCreateTableInfo(unique_ptr<CreateInfo> info, SchemaCatalogEntry &schema,
 	                                                     vector<unique_ptr<Expression>> &bound_defaults);
+	unique_ptr<BoundCreateTableInfo> BindRefreshTableInfo(CreateTableInfo &base, unique_ptr<CreateInfo> info,
+	                                                     SchemaCatalogEntry &schema);
 	static unique_ptr<BoundCreateTableInfo> BindCreateTableCheckpoint(unique_ptr<CreateInfo> info,
 	                                                                  SchemaCatalogEntry &schema);
 
