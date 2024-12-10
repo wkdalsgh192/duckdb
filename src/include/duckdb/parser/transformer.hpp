@@ -130,6 +130,8 @@ private:
 	unique_ptr<CreateStatement> TransformCreateView(duckdb_libpgquery::PGViewStmt &node);
 	//! Transform a Postgres duckdb_libpgquery::T_PGMaterializedViewStmt node into a CreateStatement
 	unique_ptr<CreateStatement> TransformCreateMaterializedView(duckdb_libpgquery::PGMaterializedViewStmt &node);
+	//! Transform a Postgres duckdb_libpgquery::T_PGMaterializedViewStmt node into a CreateStatement
+	unique_ptr<CreateStatement> TransformRefreshMaterializedView(duckdb_libpgquery::PGRefreshMatViewStmt &node);
 	//! Transform a Postgres duckdb_libpgquery::T_PGIndexStmt node into CreateStatement
 	unique_ptr<CreateStatement> TransformCreateIndex(duckdb_libpgquery::PGIndexStmt &stmt);
 	//! Transform a Postgres duckdb_libpgquery::T_PGCreateFunctionStmt node into CreateStatement

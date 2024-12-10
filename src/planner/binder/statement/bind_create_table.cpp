@@ -389,6 +389,89 @@ unique_ptr<BoundCreateTableInfo> Binder::BindCreateTableInfo(unique_ptr<CreateIn
 	return result;
 }
 
+unique_ptr<BoundCreateTableInfo> Binder::BindRefreshTableInfo(CreateTableInfo &base,
+                                                             unique_ptr<CreateInfo> info,
+                                                             SchemaCatalogEntry &schema) {
+
+	auto result = make_uniq<BoundCreateTableInfo>(schema, std::move(info));
+	auto &dependencies = result->dependencies;
+
+	vector<unique_ptr<Expression>> bound_defaults;
+	vector<unique_ptr<BoundConstraint>> bound_constraints;
+	if (base.query) {
+		auto copied_query = unique_ptr_cast<SQLStatement, SelectStatement>(base.query->Copy());
+		// construct the result object
+		auto query_obj = Bind(*base.query);
+		base.query.reset();
+		result->materialized_query = std::move(copied_query);
+		result->query = std::move(query_obj.plan);
+
+		// construct the set of columns based on the names and types of the query
+		auto &names = query_obj.names;
+		auto &sql_types = query_obj.types;
+		// e.g. create table (col1 ,col2) as QUERY
+		// col1 and col2 are the target_col_names
+		auto target_col_names = base.columns.GetColumnNames();
+
+		// TODO check  types and target_col_names are mismatch in size
+		D_ASSERT(names.size() == sql_types.size());
+		base.columns.SetAllowDuplicates(true);
+		if (!target_col_names.empty()) {
+			if (target_col_names.size() > sql_types.size()) {
+				throw BinderException("Target table has more colum names than query result.");
+			} else if (target_col_names.size() < sql_types.size()) {
+				// filled the target_col_names with the name of query names
+				for (idx_t i = target_col_names.size(); i < sql_types.size(); i++) {
+					target_col_names.push_back(names[i]);
+				}
+			}
+			ColumnList new_colums;
+			for (idx_t i = 0; i < target_col_names.size(); i++) {
+				new_colums.AddColumn(ColumnDefinition(target_col_names[i], sql_types[i]));
+			}
+			base.columns = std::move(new_colums);
+		} else {
+			for (idx_t i = 0; i < names.size(); i++) {
+				base.columns.AddColumn(ColumnDefinition(names[i], sql_types[i]));
+			}
+		}
+	} else {
+		SetCatalogLookupCallback([&dependencies, &schema](CatalogEntry &entry) {
+			if (&schema.ParentCatalog() != &entry.ParentCatalog()) {
+				// Don't register dependencies between catalogs
+				return;
+			}
+			dependencies.AddDependency(entry);
+		});
+		CreateColumnDependencyManager(*result);
+		// bind the generated column expressions
+		BindGeneratedColumns(*result);
+		// bind any constraints
+		bound_constraints = BindNewConstraints(base.constraints, base.table, base.columns);
+		// bind the default values
+		auto &catalog_name = schema.ParentCatalog().GetName();
+		auto &schema_name = schema.name;
+		BindDefaultValues(base.columns, bound_defaults, catalog_name, schema_name);
+	}
+
+	if (base.columns.PhysicalColumnCount() == 0) {
+		throw BinderException("Creating a table without physical (non-generated) columns is not supported");
+	}
+	// bind collations to detect any unsupported collation errors
+	for (idx_t i = 0; i < base.columns.PhysicalColumnCount(); i++) {
+		auto &column = base.columns.GetColumnMutable(PhysicalIndex(i));
+		if (column.Type().id() == LogicalTypeId::VARCHAR) {
+			ExpressionBinder::TestCollation(context, StringType::GetCollation(column.Type()));
+		}
+		BindLogicalType(column.TypeMutable(), &result->schema.catalog, result->schema.name);
+	}
+	result->dependencies.VerifyDependencies(schema.catalog, result->Base().table);
+
+	auto &properties = GetStatementProperties();
+	properties.allow_stream_result = false;
+	return result;
+}
+
 unique_ptr<BoundCreateTableInfo> Binder::BindCreateTableInfo(unique_ptr<CreateInfo> info) {
 	auto &base = info->Cast<CreateTableInfo>();
 	auto &schema = BindCreateSchema(base);
