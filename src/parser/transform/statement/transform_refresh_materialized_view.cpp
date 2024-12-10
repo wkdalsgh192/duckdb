@@ -11,6 +11,8 @@ Transformer::TransformRefreshMaterializedView(duckdb_libpgquery::PGRefreshMatVie
 	auto info = make_uniq<CreateTableInfo>();
 
 	info->table = stmt.relation->relname;
+	info->type = CatalogType::MATERIALIZED_VIEW_ENTRY;
+	info->on_conflict = OnCreateConflict::REPLACE_ON_CONFLICT;
 
 	result->info = std::move(info);
 	return result;

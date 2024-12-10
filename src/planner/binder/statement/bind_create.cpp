@@ -676,6 +676,30 @@ BoundStatement Binder::Bind(CreateStatement &stmt) {
 		result.plan = table.catalog.BindCreateIndex(*this, stmt, table, std::move(plan));
 		break;
 	}
+	case CatalogType::MATERIALIZED_VIEW_ENTRY: {
+		auto &create_info = stmt.info->Cast<CreateTableInfo>();
+		auto table_entry =
+		    entry_retriever.GetEntry(CatalogType::TABLE_ENTRY, INVALID_CATALOG, create_info.schema, create_info.table);
+		auto &pk_table_entry_ptr = table_entry->Cast<TableCatalogEntry>();
+
+		auto &duck_table_entry_ptr = (&pk_table_entry_ptr)->Cast<DuckTableEntry>();
+		create_info.query = std::move(duck_table_entry_ptr.query);
+		create_info.columns = (&pk_table_entry_ptr.GetColumns())->Copy();
+
+		auto &schema = BindCreateSchema(create_info);
+		auto bound_info =
+		    BindRefreshTableInfo(create_info, std::move(stmt.info), schema);
+
+		auto root = std::move(bound_info->query);
+		auto create_table = make_uniq<LogicalCreateTable>(schema, std::move(bound_info));
+
+		if (root) {
+			properties.return_type = StatementReturnType::CHANGED_ROWS;
+			create_table->children.push_back(std::move(root));
+		}
+		result.plan = std::move(create_table);
+		break;
+	}
 	case CatalogType::TABLE_ENTRY: {
 		auto &create_info = stmt.info->Cast<CreateTableInfo>();
 		// If there is a foreign key constraint, resolve primary key column's index from primary key column's name
@@ -743,11 +767,6 @@ BoundStatement Binder::Bind(CreateStatement &stmt) {
 		auto &schema = bound_info->schema;
 		auto create_table = make_uniq<LogicalCreateTable>(schema, std::move(bound_info));
 		if (root) {
-			// CREATE TABLE AS
-			//auto &view_base = stmt.info->Cast<CreateViewInfo>();
-			//// bind the schema
-			//auto &view_schema = BindCreateSchema(*stmt.info);
-			//BindCreateViewInfo(view_base);
 			properties.return_type = StatementReturnType::CHANGED_ROWS;
 			create_table->children.push_back(std::move(root));
 		}

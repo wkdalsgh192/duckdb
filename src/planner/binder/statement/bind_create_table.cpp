@@ -389,10 +389,10 @@ unique_ptr<BoundCreateTableInfo> Binder::BindCreateTableInfo(unique_ptr<CreateIn
 	return result;
 }
 
-unique_ptr<BoundCreateTableInfo> Binder::BindRefreshTableInfo(CreateTableInfo base,
+unique_ptr<BoundCreateTableInfo> Binder::BindRefreshTableInfo(CreateTableInfo &base,
                                                              unique_ptr<CreateInfo> info,
                                                              SchemaCatalogEntry &schema) {
-	//auto &schema = BindCreateSchema(base);
+
 	auto result = make_uniq<BoundCreateTableInfo>(schema, std::move(info));
 	auto &dependencies = result->dependencies;
 
